@@ -3,7 +3,7 @@ package dpla.ingestion3
 import java.io.File
 
 import com.databricks.spark.avro._
-import dpla.ingestion3.harvesters.resourceSync.{ResourceSyncProcessor, ResourceSyncRdd}
+import dpla.ingestion3.harvesters.resourceSync.ResourceSyncProcessor
 import dpla.ingestion3.utils.Utils
 import org.apache.avro.Schema
 import org.apache.log4j.LogManager
@@ -11,6 +11,10 @@ import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.SparkConf
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.util.EntityUtils
+import dpla.ingestion3.harvesters.Harvester
 
 
 /**
@@ -26,6 +30,8 @@ import org.apache.spark.SparkConf
 
 
 object RsHarvesterMain extends App {
+
+  private[this] val httpClient = HttpClients.createDefault
 
   val logger = LogManager.getLogger(RsHarvesterMain.getClass)
 
@@ -75,7 +81,7 @@ object RsHarvesterMain extends App {
     * is being performed and whether *Dump functionality is supported.
     *
     */
-  val rsRdd: ResourceSyncRdd = (baselineSync, isDumpFuncSupported) match {
+  val rsRdd = (baselineSync, isDumpFuncSupported) match {
     case (true, false)=> {
       // Perform full sync using ResourceList
       /**
@@ -91,7 +97,8 @@ object RsHarvesterMain extends App {
        */
       // Returns a Sequence of the items resources that need to be fetched
       val resourceItems = ResourceSyncProcessor.getResources(hyboxResourceList)
-      new ResourceSyncRdd(resourceItems, sc).persist(StorageLevel.DISK_ONLY)
+      val resourceItemRdd = sc.parallelize(resourceItems)
+      resourceItemRdd.map(r => harvestDocument(r)).persist(StorageLevel.DISK_ONLY)
     }
 
     /*
@@ -109,6 +116,19 @@ object RsHarvesterMain extends App {
     */
 
     case _ => throw new Exception("This is strange...")
+  }
+
+  def harvestDocument(url: String) : (String, String) = {
+    val httpGet = new HttpGet(url)
+    httpGet.addHeader("Accept", "text/turtle")  // Explicitly limited to text/turtle for hybox testing
+    val rsp = httpClient.execute(httpGet)
+
+    try {
+      val entity = rsp.getEntity
+      (Harvester.generateMd5(url,"hybox"), EntityUtils.toString(entity))
+    } finally {
+      rsp.close()
+    }
   }
 
   // From OAI harvester
