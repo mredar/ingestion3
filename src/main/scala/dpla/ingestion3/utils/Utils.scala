@@ -1,12 +1,16 @@
 package dpla.ingestion3.utils
 
 import java.io.File
+
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{Path, FileSystem}
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.SequenceFile.Reader
 import org.apache.hadoop.io.Text
+
 import scala.xml.Node
 import java.util.concurrent.TimeUnit
+
+import scala.xml.XML
 
 /**
   * Created by scott on 1/18/17.
@@ -48,6 +52,20 @@ object Utils {
      .par
      .count(fileName => fileName.endsWith(ext))
  }
+
+  /**
+    * Writes an xml tree to string without any pretty formatting
+    *
+    * @param node An XML node
+    * @return String representation of the node
+    */
+
+
+  def xmlToString(node: Node): String = {
+    val w = new java.io.StringWriter()
+    XML.write(w, node, "utf-8", xmlDecl = false, null)
+    w.toString
+  }
 
   /**
     * Formats the Node in a more human-readable form
