@@ -25,5 +25,6 @@ libraryDependencies ++= Seq(
   "org.apache.httpcomponents" % "httpclient" % "4.5.2",
   // Enricher dependencies
   // TODO: reconcile with httpclient above.
-  "org.scalaj" %% "scalaj-http" % "2.3.0"
+  "org.scalaj" %% "scalaj-http" % "2.3.0",
+  "org.apache.commons" % "commons-compress" % "1.13"
 )
