@@ -17,10 +17,8 @@ libraryDependencies ++= Seq(
   "org.eclipse.rdf4j" % "rdf4j-model" % "2.2",
   "org.eclipse.rdf4j" % "rdf4j-rio-api" % "2.2",
   "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % "2.2",
-  "org.elasticsearch" % "elasticsearch-hadoop" % "2.0.3" excludeAll(
-    ExclusionRule("cascading", "cascading-hadoop"),
-    ExclusionRule("cascading", "cascading-local")
-  ),
+  // For Elasticsearch, see https://www.elastic.co/guide/en/elasticsearch/hadoop/current/install.html
+  "org.elasticsearch" % "elasticsearch-spark-20_2.11" % "5.3.2", // Spark 2.0+, Scala 2.11+
   // ApiHarvester depends
   "org.apache.httpcomponents" % "httpclient" % "4.5.2",
   // Enricher dependencies
