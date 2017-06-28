@@ -51,17 +51,63 @@ object OaiHarvesterMain {
     val metadataPrefix = args(2)
     val verb = args(3)
     val provider = args(4)
+
+    /*
+      If ListSets is supported by the endpoint and sets are not passed in then
+      call some method that will return a String(?) how the fuck is the supposed to work?
+      Shouldn't sets be an array or list? Why is this a Option[String] value?
+
+      Okay, the answer is the String is expected to contain set names separated by a comma
+      and then in OaiRelation it is split on the comma to create a list and then that list
+      is used to harvest sets in parallel
+
+      So my function needs to call ListSets until depleted and return a List of Strings
+
+
+      To harvest all sets the fif parameter should be provided but empty, "".
+
+     */
     val sets: Option[String] = if (args.isDefinedAt(5)) Some(args(5)) else None
 
     Utils.deleteRecursively(new File(outputFile))
 
-    val sparkConf = new SparkConf().setAppName("Oai Harvest")
+    val sparkConf = new SparkConf().setAppName("Oai Harvest").setMaster("local[3]")
     val spark = SparkSession.builder().config(sparkConf).getOrCreate()
     val sc = spark.sparkContext
 
     val start = System.currentTimeMillis()
 
+
+    /**
+      * Figure out wtf to do with sets
+    */
+
+    val setsToHarvest = sets match {
+      // To indicate that all sets should be harvested an empty string must
+      // be passed in via command line args. This will 
+      case Some("") => {
+        val setOptions = Map( "metadataPrefix" -> metadataPrefix, "verb" -> "ListSets")
+
+        val setResults = spark.read
+          .format("dpla.ingestion3.harvesters.oai")
+          .options(setOptions)
+          .load(endpoint)
+
+        import spark.implicits._
+
+        val setArr: Array[String] = setResults.map(f => f.getString(0)).collect()
+
+        setArr.foreach( println(_) )
+
+      }
+      case Some(sets) => {
+        println("Get sets from param")
+      }
+      case _ => println("Use listRecords")
+    }
+
     val baseOptions = Map( "metadataPrefix" -> metadataPrefix, "verb" -> verb)
+
     val readerOptions = getReaderOptions(baseOptions, sets)
 
     val results = spark.read
@@ -91,10 +137,14 @@ object OaiHarvesterMain {
 
   def validateArgs(args: Array[String]) = {
     // Complains about not being typesafe...
-    if(args.length < 5) {
-      logger.error("Bad number of args: <OUTPUT FILE>, <OAI URL>, " +
-        "<METADATA PREFIX>, <OAI VERB>, <PROVIDER>, " +
-        "<SETS> (optional)")
+    if(args.length < 5 || args.length > 6) {
+      logger.error("Bad number of arguments passed to OAI harvester. Expecting:\n" +
+        "\t<OUTPUT AVRO FILE>\n" +
+        "\t<OAI URL>\n" +
+        "\t<METADATA PREFIX>\n" +
+        "\t<OAI VERB>\n" +
+        "\t<PROVIDER>\n" +
+        "\t<SETS> (optional)")
       sys.exit(-1)
     }
   }

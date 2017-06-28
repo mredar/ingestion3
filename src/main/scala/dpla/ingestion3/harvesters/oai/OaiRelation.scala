@@ -25,7 +25,7 @@ class OaiRelation (parameters: Map[String, String])
   val verb = parameters("verb")
   val metadataPrefix = parameters("metadataPrefix")
 
-  val sets: Option[String] = parameters.get("sets")
+  val sets: Option[Any] = parameters.get("sets")
 
   val oaiResponseBuilder = new OaiResponseBuilder(sqlContext)
 
@@ -38,9 +38,12 @@ class OaiRelation (parameters: Map[String, String])
       case None => {
         oaiResponseBuilder.getResponse(oaiParams)
       }
-      case Some(sets) => {
-        val setArray: Array[String] = parseSets(sets)
+      case setStr: Option[String] => {
+        val setArray: Array[String] = parseSets(setStr.get)
         oaiResponseBuilder.getResponseBySets(oaiParams, setArray)
+      }
+      case setArr: Option[Array[String]] => {
+        oaiResponseBuilder.getResponseBySets(oaiParams, setArr.get)
       }
     }
   }
