@@ -9,39 +9,6 @@ import org.json4s.jackson.JsonMethods._
 
 class CdlExtractor extends Extractor with JsonExtractionUtils {
 
-  def agent = EdmAgent(
-    name = Some("California Digital Library"),
-    uri = Some(new URI("http://dp.la/api/contributor/cdl"))
-  )
-
-  lazy val provider: String = {
-    val campus = extractStrings("campus_name").headOption
-    val repository = extractStrings("repository_name").headOption
-    (campus, repository) match {
-      case (Some(campusVal), Some(repositoryVal)) => campusVal + ", " + repositoryVal
-      case (None, Some(repositoryVal)) => repositoryVal
-      case _ => throw new Exception("Unable to determine provider.")
-    }
-  }
-
-  lazy val thumbnail: Option[EdmWebResource] = {
-    extractString("reference_image_md5") match {
-      case Some(md5) => Some(
-        uriOnlyWebResource(
-          new URI("https://thumbnails.calisphere.org/{mode}/150x150/" + md5)
-        )
-      )
-      case None => None
-    }
-  }
-
-  lazy val providerUri: URI = {
-    extractString("url_item") match {
-      case Some(url) => new URI(url)
-      case None => throw new Exception("Unable to determine URL of item on provider's site")
-    }
-  }
-
   def build(rawData: String): DplaMapData = {
 
     implicit val json: JValue = parse(rawData)
@@ -63,8 +30,8 @@ class CdlExtractor extends Extractor with JsonExtractionUtils {
         publisher = extractStrings("publisher_ss").map(nameOnlyAgent),
         relation = extractStrings("relation_ss").map(eitherStringOrUri),
         rights = extractStrings("rights_ss")
-            ++ extractStrings("rights_note_ss")
-            ++ extractStrings("rights_date_ss"),
+          ++ extractStrings("rights_note_ss")
+          ++ extractStrings("rights_date_ss"),
         rightsHolder = extractStrings("rightsholder_ss").map(nameOnlyAgent),
         subject = extractStrings("subject_ss").map(nameOnlyConcept),
         temporal = extractStrings("temporal_ss").map(stringOnlyTimeSpan),
@@ -72,15 +39,46 @@ class CdlExtractor extends Extractor with JsonExtractionUtils {
         `type` = extractStrings("type")
       ),
       EdmWebResource(
-        uri = providerUri
+        uri = providerUri(json)
       ),
       OreAggregation(
         uri = new URI("http://example.com"), //TODO: our url
-        dataProvider = nameOnlyAgent(provider),
+        dataProvider = nameOnlyAgent(provider(json)),
         originalRecord = rawData,
-        preview = thumbnail,
+        preview = thumbnail(json),
         provider = agent
       )
     )
   }
+
+  def provider(json: JValue): String = {
+    val campus = extractStrings("campus_name")(json).headOption
+    val repository = extractStrings("repository_name")(json).headOption
+    (campus, repository) match {
+      case (Some(campusVal), Some(repositoryVal)) => campusVal + ", " + repositoryVal
+      case (None, Some(repositoryVal)) => repositoryVal
+      case _ => throw new Exception("Unable to determine provider.")
+    }
+  }
+
+  def thumbnail(json: JValue): Option[EdmWebResource] =
+    extractString("reference_image_md5")(json) match {
+      case Some(md5) => Some(
+        uriOnlyWebResource(
+          new URI("https://thumbnails.calisphere.org/{mode}/150x150/" + md5)
+        )
+      )
+      case None => None
+    }
+
+  def providerUri(json: JValue): URI =
+    extractString("url_item")(json) match {
+      case Some(url) => new URI(url)
+      case None => throw new Exception("Unable to determine URL of item on provider's site")
+    }
+
+  def agent = EdmAgent(
+    name = Some("California Digital Library"),
+    uri = Some(new URI("http://dp.la/api/contributor/cdl"))
+  )
 }
