@@ -3,14 +3,9 @@ package dpla.ingestion3.mappers.providers
 import java.net.URI
 
 import dpla.ingestion3.mappers.xml.XmlExtractionUtils
-import dpla.ingestion3.model.DplaMapData
-import dpla.ingestion3.model.DplaSourceResource
-import dpla.ingestion3.model.EdmAgent
-import dpla.ingestion3.model.EdmWebResource
-import dpla.ingestion3.model.OreAggregation
+import dpla.ingestion3.model.{DplaMapData, DplaSourceResource, EdmAgent, EdmWebResource, OreAggregation, _}
 
 import scala.xml._
-import dpla.ingestion3.model._
 
 class PaExtractor extends Extractor with XmlExtractionUtils {
 

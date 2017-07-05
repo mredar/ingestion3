@@ -6,7 +6,7 @@ import dpla.ingestion3.model.DplaMapData.LiteralOrUri
 
 package object model {
 
-  val DCMI_TYPES =
+  val DcmiTypes =
     Set("collection", "dataset", "event", "image", "interactiveresource", "service", "software", "sound", "text")
 
   def nameOnlyAgent(string: String): EdmAgent = EdmAgent(name = Some(string))
@@ -19,10 +19,9 @@ package object model {
 
   def nameOnlyCollection(string: String): DcmiTypeCollection = DcmiTypeCollection(title = Some(string))
 
-
   def uriOnlyWebResource(uri: URI): EdmWebResource = EdmWebResource(uri = uri)
 
-  def isDcmiType(string: String): Boolean = DCMI_TYPES.contains(string.toLowerCase.replaceAll(" ", ""))
+  def isDcmiType(string: String): Boolean = DcmiTypes.contains(string.toLowerCase.replaceAll(" ", ""))
 
   def eitherStringOrUri(string: String): LiteralOrUri = new Left(string)
 

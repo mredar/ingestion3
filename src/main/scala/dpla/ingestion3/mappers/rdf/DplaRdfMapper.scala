@@ -1,13 +1,8 @@
 package dpla.ingestion3.mappers.rdf
 
 
-import dpla.ingestion3.model.DcmiTypeCollection
-import dpla.ingestion3.model.DplaMapData
-import dpla.ingestion3.model.EdmAgent
-import dpla.ingestion3.model.EdmTimeSpan
-import dpla.ingestion3.model.EdmWebResource
-import org.eclipse.rdf4j.model.Model
-import org.eclipse.rdf4j.model.Resource
+import dpla.ingestion3.model._
+import org.eclipse.rdf4j.model.{Model, Resource}
 
 /**
   * This class handles mapping DplaMapData to the RDF4J Model domain

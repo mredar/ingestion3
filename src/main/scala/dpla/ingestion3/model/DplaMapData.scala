@@ -1,6 +1,7 @@
 package dpla.ingestion3.model
 
 import java.net.URI
+import dpla.ingestion3.model.DplaMapData._
 
 /**
   * Contains type definitions that express cardinality of fields
@@ -14,8 +15,6 @@ object DplaMapData {
   type ExactlyOne[T] = T
   type LiteralOrUri = Either[String,URI]
 }
-
-import dpla.ingestion3.model.DplaMapData._
 
 /**
   * Container for the classes that represent an item in DPLA MAP.

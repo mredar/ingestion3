@@ -2,12 +2,8 @@ package dpla.ingestion3.mappers.rdf
 
 import java.net.URI
 
-import dpla.ingestion3.model.DplaMapData.ZeroToMany
-import dpla.ingestion3.model.DplaMapData.ZeroToOne
-import org.eclipse.rdf4j.model.IRI
-import org.eclipse.rdf4j.model.Model
-import org.eclipse.rdf4j.model.Resource
-import org.eclipse.rdf4j.model.Value
+import dpla.ingestion3.model.DplaMapData.{ZeroToMany, ZeroToOne}
+import org.eclipse.rdf4j.model.{IRI, Model, Resource, Value}
 import org.eclipse.rdf4j.model.util.ModelBuilder
 
 trait RdfBuilderUtils extends RdfValueUtils with DefaultVocabularies {

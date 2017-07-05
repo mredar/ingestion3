@@ -3,13 +3,9 @@ package dpla.ingestion3.mappers.providers
 import java.net.URI
 
 import dpla.ingestion3.mappers.json.JsonExtractionUtils
-import dpla.ingestion3.model.DplaMapData
-import dpla.ingestion3.model.DplaSourceResource
-import dpla.ingestion3.model.EdmWebResource
-import dpla.ingestion3.model.OreAggregation
+import dpla.ingestion3.model.{DplaMapData, DplaSourceResource, EdmWebResource, OreAggregation, _}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import dpla.ingestion3.model._
 
 class CdlExtractor extends Extractor with JsonExtractionUtils {
 
@@ -18,37 +14,37 @@ class CdlExtractor extends Extractor with JsonExtractionUtils {
     uri = Some(new URI("http://dp.la/api/contributor/cdl"))
   )
 
+  lazy val provider: String = {
+    val campus = extractStrings("campus_name").headOption
+    val repository = extractStrings("repository_name").headOption
+    (campus, repository) match {
+      case (Some(campusVal), Some(repositoryVal)) => campusVal + ", " + repositoryVal
+      case (None, Some(repositoryVal)) => repositoryVal
+      case _ => throw new Exception("Unable to determine provider.")
+    }
+  }
+
+  lazy val thumbnail: Option[EdmWebResource] = {
+    extractString("reference_image_md5") match {
+      case Some(md5) => Some(
+        uriOnlyWebResource(
+          new URI("https://thumbnails.calisphere.org/{mode}/150x150/" + md5)
+        )
+      )
+      case None => None
+    }
+  }
+
+  lazy val providerUri: URI = {
+    extractString("url_item") match {
+      case Some(url) => new URI(url)
+      case None => throw new Exception("Unable to determine URL of item on provider's site")
+    }
+  }
+
   def build(rawData: String): DplaMapData = {
 
     implicit val json: JValue = parse(rawData)
-
-    lazy val provider: String = {
-      val campus = extractStrings("campus_name").headOption
-      val repository = extractStrings("repository_name").headOption
-      (campus, repository) match {
-        case (Some(campusVal), Some(repositoryVal)) => campusVal + ", " + repositoryVal
-        case (None, Some(repositoryVal)) => repositoryVal
-        case _ => throw new Exception("Unable to determine provider.")
-      }
-    }
-
-    lazy val thumbnail: Option[EdmWebResource] = {
-      extractString("reference_image_md5") match {
-        case Some(md5) => Some(
-          uriOnlyWebResource(
-            new URI("https://thumbnails.calisphere.org/{mode}/150x150/" + md5)
-          )
-        )
-        case None => None
-      }
-    }
-
-    lazy val providerUri: URI = {
-      extractString("url_item") match {
-        case Some(url) => new URI(url)
-        case None => throw new Exception("Unable to determine URL of item on provider's site")
-      }
-    }
 
     DplaMapData(
       DplaSourceResource(
