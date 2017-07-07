@@ -11,6 +11,7 @@ class ParseDateEnrichment {
   //TODO ranges
   def parse(dateString: String, allowInterval: Boolean = false): Option[String] = {
     val str = preprocess(dateString)
+    //TODO these lazy vals get dereferenced when put in the Seq below.
     lazy val interval = if (allowInterval) parseInterval(str) else None
     lazy val parseDateVal = parseDate(str)
     //    date ||= Date.edtf(str.gsub('.', '-')) //todo
