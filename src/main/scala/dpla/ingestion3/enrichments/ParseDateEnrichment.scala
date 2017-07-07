@@ -32,7 +32,10 @@ class ParseDateEnrichment {
       circaVal
     )
 
-    def findFirst(options: List[() => Option[String]]): Option[String] = options match {
+    //this iterates over the list, executes the next function, and returns it if there's a result.
+    //otherwise, it continues until the end and returns None.
+    //I wasn't able to find a better way to emulate ||= from Ruby. There's probably a better way.
+    @tailrec def findFirst(options: List[() => Option[String]]): Option[String] = options match {
       case x::xs =>
         val result = x()
         if (result.isDefined) result else findFirst(xs)
