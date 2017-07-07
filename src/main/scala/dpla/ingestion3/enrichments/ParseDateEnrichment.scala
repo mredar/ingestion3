@@ -12,19 +12,17 @@ class ParseDateEnrichment {
   def parse(dateString: String, allowInterval: Boolean = false): Option[String] = {
     val str = preprocess(dateString)
     //TODO these lazy vals get dereferenced when put in the Seq below.
-    lazy val interval = if (allowInterval) parseInterval(str) else None
-    lazy val parseDateVal = parseDate(str)
+    val interval = () => if (allowInterval) parseInterval(str) else None
+    val parseDateVal = () => parseDate(str)
     //    date ||= Date.edtf(str.gsub('.', '-')) //todo
-    lazy val partialEdtfVal = partialEdtf(str)
-    lazy val decadeHyphenVal = decadeHyphen(str)
-    lazy val monthYearVal = monthYear(str)
-    lazy val decadeStrVal = decadeString(str)
-    lazy val hyphenatedPartialRangeVal = hyphenatedPartialRange(str)
+    val partialEdtfVal = () => partialEdtf(str)
+    val decadeHyphenVal = () => decadeHyphen(str)
+    val monthYearVal = () => monthYear(str)
+    val decadeStrVal = () => decadeString(str)
+    val hyphenatedPartialRangeVal = () => hyphenatedPartialRange(str)
+    val circaVal = () => circa(str)
 
-    lazy val circaVal = circa(str)
-
-    Seq(
-      interval,
+    val options = List(
       parseDateVal,
       partialEdtfVal,
       decadeHyphenVal,
@@ -32,7 +30,16 @@ class ParseDateEnrichment {
       decadeStrVal,
       hyphenatedPartialRangeVal,
       circaVal
-    ).collectFirst({case Some(x: String) => x})
+    )
+
+    def findFirst(options: List[() => Option[String]]): Option[String] = options match {
+      case x::xs =>
+        val result = x()
+        if (result.isDefined) result else findFirst(xs)
+      case Nil => None
+    }
+
+    findFirst(options)
   }
 
   private def preprocess(str: String): String = {
@@ -85,7 +92,6 @@ class ParseDateEnrichment {
     }
   }
 
-  //todo why is this getting called twice
   private def parseDate(str: String): Option[String] = {
     @tailrec
     def innerParseDate(str: String, formats: List[SimpleDateFormat]): Option[String] =
